@@ -1,5 +1,9 @@
+<h1>
+  WIP: This is a fresh fork that I plan to change to support PASETO instead of JWT. Not yet functional or production ready.
+</h1>
+
 <h1 align="left" style="margin-bottom: 20px; font-weight: 500; font-size: 50px; color: black;">
-  FastAPI JWT Auth
+  FastAPI PASETO Auth
 </h1>
 
 ![Tests](https://github.com/IndominusByte/fastapi-jwt-auth/workflows/Tests/badge.svg)
