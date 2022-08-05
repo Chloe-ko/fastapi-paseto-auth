@@ -1,12 +1,12 @@
-site_name: FastAPI JWT Auth
-site_description: FastAPI extension that provides JWT Auth support (secure, easy to use, and lightweight)
+site_name: FastAPI PASETO Auth
+site_description: FastAPI extension that provides PASETO Auth support (secure, easy to use, and lightweight)
 theme:
   name: material
   palette:
     primary: black
 
-repo_name: IndominusByte/fastapi-jwt-auth
-repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
+repo_name: Chloe-ko/fastapi-paseto-auth
+repo_url: https://github.com/Chloe-ko/fastapi-paseto-auth
 
 markdown_extensions:
   - markdown_include.include:
@@ -37,10 +37,8 @@ nav:
     - Refresh Tokens: usage/refresh.md
     - Freshness Tokens: usage/freshness.md
     - Revoking Tokens: usage/revoking.md
-    - JWT in Cookies: usage/jwt-in-cookies.md
   - Advanced Usage:
     - Additional claims: advanced-usage/additional-claims.md
-    - Asymmetric Algorithm: advanced-usage/asymmetric.md
     - Dynamic Token Expires: advanced-usage/dynamic-expires.md
     - Dynamic Token Algorithm: advanced-usage/dynamic-algorithm.md
     - WebSocket Protecting: advanced-usage/websocket.md
@@ -50,8 +48,6 @@ nav:
     - General Options: configuration/general.md
     - Headers Options: configuration/headers.md
     - Denylist Options: configuration/denylist.md
-    - Cookies Options: configuration/cookies.md
-    - CSRF Options: configuration/csrf.md
   - API Documentation: api-doc.md
   - Development - Contributing: contributing.md
   - Release Notes: release-notes.md
