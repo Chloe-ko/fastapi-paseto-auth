@@ -1,13 +1,15 @@
 from fastapi_paseto_auth.config import LoadConfig
 from pydantic import ValidationError
-from typing import Callable, List
+from typing import Callable, List, Optional, Dict
 from datetime import timedelta
+from pyseto import Token
 
 
 class AuthConfig:
     _token = None
     _token_location = {"headers"}
     _current_user = None
+    _decoded_token: Optional[Token] = None
 
     _secret_key = None
     _public_key = None
@@ -27,7 +29,7 @@ class AuthConfig:
     _refresh_token_expires = timedelta(days=30)
 
     @property
-    def jwt_in_headers(self) -> bool:
+    def paseto_in_headers(self) -> bool:
         return "headers" in self._token_location
 
     @classmethod

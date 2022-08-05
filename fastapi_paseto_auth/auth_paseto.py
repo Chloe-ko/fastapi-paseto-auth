@@ -5,6 +5,7 @@ from fastapi_paseto_auth.auth_config import AuthConfig
 import uuid
 import json
 from pyseto import Key, Paseto, Token
+from pyseto.exceptions import VerifyError, DecryptError
 import pyseto
 from fastapi_paseto_auth.exceptions import (
     InvalidHeaderError,
@@ -25,7 +26,7 @@ class AuthPASETO(AuthConfig):
         Get PASETO header from incoming request and decode it
         """
         if req:
-            if self.jwt_in_headers:
+            if self.paseto_in_headers:
                 auth_header = req.headers.get(self._header_name)
                 if auth_header:
                     self._token = self._get_paseto_from_header(auth_header)
@@ -46,7 +47,7 @@ class AuthPASETO(AuthConfig):
             if len(parts) != 1:
                 raise InvalidHeaderError(
                     status_code=422,
-                    msg=f"Bad {header_name} header. Excepted value '<JWT>'",
+                    msg=f"Bad {header_name} header. Excepted value '<PASETO>'",
                 )
             self._token = parts[0]
         else:
@@ -59,7 +60,7 @@ class AuthPASETO(AuthConfig):
 
             self._token = parts[1]
 
-    def _get_jwt_identifier(self) -> str:
+    def _get_paseto_identifier(self) -> str:
         return str(uuid.uuid4())
 
     def _get_secret_key(self, purpose: str, process: str) -> str:
@@ -133,7 +134,7 @@ class AuthPASETO(AuthConfig):
         reserved_claims = {
             "sub": subject,
             "nbf": self._get_int_from_datetime(datetime.utcnow()),
-            "jti": self._get_jwt_identifier(),
+            "jti": self._get_paseto_identifier(),
         }
 
         custom_claims = {"type": type_token}
@@ -171,9 +172,7 @@ class AuthPASETO(AuthConfig):
         """
         return self._token_in_denylist_callback is not None
 
-    def _check_token_is_revoked(
-        self, raw_token: Dict[str, Union[str, int, bool]]
-    ) -> None:
+    def _check_token_is_revoked(self) -> None:
         """
         Ensure that AUTHPASETO_DENYLIST_ENABLED is true and callback regulated, and then
         call function denylist callback with passing decode PASETO, if true
@@ -189,7 +188,7 @@ class AuthPASETO(AuthConfig):
                 "authpaseto_denylist_enabled is 'True'"
             )
 
-        if self._token_in_denylist_callback.__func__(raw_token):
+        if self._token_in_denylist_callback.__func__(self._token):
             raise RevokedTokenError(status_code=401, message="Token has been revoked")
 
     def _get_expiry_seconds(
@@ -276,21 +275,10 @@ class AuthPASETO(AuthConfig):
             user_claims=user_claims,
         )
 
-    def _verify_paseto_optional_in_request(self, token: str) -> None:
-        """
-        Optionally check if this request has a valid access token
-        :param token: The encoded PASETO token
-        """
-        if token:
-            self._verifying_token(token)
-
-        if token and self.get_raw_jwt(token)["type"] != "access":
-            raise AccessTokenRequired(
-                status_code=422, message="Only access tokens are allowed"
-            )
-
-    def _get_token_version(self, token: str) -> int:
-        parts = token.split(".")
+    def _get_token_version(
+        self,
+    ) -> int:
+        parts = self._token.split(".")
         match parts[0]:
             case "v4":
                 return 4
@@ -305,8 +293,10 @@ class AuthPASETO(AuthConfig):
                     status_code=422, message=f"Invalid PASETO version {parts[0]}"
                 )
 
-    def _get_token_purpose(self, token: str) -> str:
-        parts = token.split(".")
+    def _get_token_purpose(
+        self,
+    ) -> str:
+        parts = self._token.split(".")
         match parts[1]:
             case "local":
                 return "local"
@@ -317,7 +307,7 @@ class AuthPASETO(AuthConfig):
                     status_code=422, message=f"Invalid PASETO purpose {parts[1]}"
                 )
 
-    def _decode_token(self, encoded_token: str, issuer: Optional[str] = None) -> Token:
+    def _decode_token(self) -> Token:
         """
         Verified token and catch all error from paseto package and return decode token
         :param encoded_token: token hash
@@ -325,15 +315,110 @@ class AuthPASETO(AuthConfig):
         :return: raw data from the hash token in the form of a dictionary
         """
 
-        purpose = self._get_token_purpose(encoded_token)
-        version = self._get_token_version(encoded_token)
+        purpose = self._get_token_purpose(self._token)
+        version = self._get_token_version(self._token)
 
         secret_key = self._get_secret_key(purpose=purpose, process="decode")
         decoding_key = Key.new(version=version, purpose=purpose, key=secret_key)
 
         try:
-            return pyseto.decode(
-                keys=decoding_key, token=encoded_token, deserializer=json
+            token = pyseto.decode(
+                keys=decoding_key, token=self._token, deserializer=json
             )
+            self._decoded_token = token
+            self._current_user = token.payload["sub"]
+            return token
         except Exception as err:
             raise PASETODecodeError(status_code=422, message=str(err))
+
+    def get_token_payload(self) -> Optional[Dict[str, Union[str, int, bool]]]:
+        """
+        Get payload from token
+        :param decoded_token: decoded token object
+        :return: payload from token
+        """
+
+        if self._decode_token:
+            return self._decoded_token.payload
+
+        if not self._token:
+            return None
+
+        return self._decode_token(self._token).payload
+
+    def get_jti(self) -> str:
+        """
+        Returns the JTI (unique identifier) of an encoded PASETO
+        :param encoded_token: The encoded PASETO from parameter
+        :return: string of JTI
+        """
+        return self.get_token_payload(self._token)["jti"]
+
+    def get_paseto_subject(self) -> Optional[Union[str, int]]:
+        """
+        this will return the subject of the PASETO that is accessing this endpoint.
+        If no PASETO is present, `None` is returned instead.
+        :return: sub of PASETO
+        """
+        if not self._token:
+            return None
+
+        return self.get_token_payload(self._token)["sub"]
+
+    def current_user(self) -> Optional[Union[str, int]]:
+        """
+        this will return the subject of the PASETO that is accessing this endpoint.
+        If no PASETO was validated yet, returns none
+        :return: sub of PASETO
+        """
+
+        return self._current_user
+
+    def paseto_required(
+        self,
+        optional: bool = False,
+        fresh: bool = False,
+        refresh_token: bool = False,
+    ) -> None:
+        """
+        This function will check whether the requester has a valid token. If not, it will raise an exception.
+        :param optional: if True, the function will not raise an exception if no token is present
+        :param fresh: if True, the function will raise an exception if the token is not fresh
+        :param refresh_token: if True, the function will raise an exception if the token is not a refresh token
+        :return: None
+        """
+
+        if not self._token:
+            if not optional:
+                raise MissingTokenError(
+                    status_code=401, message="PASETO Authorization Token required"
+                )
+            else:
+                return None
+
+        try:
+            self._decode_token()
+        except (VerifyError, DecryptError) as err:
+            if optional:
+                return None
+            else:
+                raise err
+
+        payload = self.get_token_payload()
+
+        if not refresh_token and payload["type"] != "access":
+            raise AccessTokenRequired(
+                status_code=401,
+                message=f"Access token required but {payload['type']} provided",
+            )
+        elif refresh_token and payload["type"] != "refresh":
+            raise RefreshTokenRequired(
+                status_code=401,
+                message=f"Refresh token required but {payload['type']} provided",
+            )
+
+        if fresh:
+            if not payload["fresh"]:
+                raise FreshTokenRequired(
+                    status_code=401, message="PASETO access token is not fresh"
+                )
