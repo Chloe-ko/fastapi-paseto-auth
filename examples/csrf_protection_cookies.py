@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
-from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
+from fastapi_paseto_auth import AuthJWT
+from fastapi_paseto_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
 
 """
@@ -13,9 +13,11 @@ methods should define CSRF token in headers default is ('POST','PUT','PATCH','DE
 
 app = FastAPI()
 
+
 class User(BaseModel):
     username: str
     password: str
+
 
 class Settings(BaseModel):
     authjwt_secret_key: str = "secret"
@@ -28,25 +30,25 @@ class Settings(BaseModel):
     # Change to 'lax' in production to make your website more secure from CSRF Attacks, default is None
     # authjwt_cookie_samesite: str = 'lax'
 
+
 @AuthJWT.load_config
 def get_config():
     return Settings()
 
+
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
-@app.post('/login')
+
+@app.post("/login")
 def login(user: User, Authorize: AuthJWT = Depends()):
     """
     With authjwt_cookie_csrf_protect set to True, set_access_cookies() and
     set_refresh_cookies() will now also set the non-httponly CSRF cookies
     """
     if user.username != "test" or user.password != "test":
-        raise HTTPException(status_code=401,detail="Bad username or password")
+        raise HTTPException(status_code=401, detail="Bad username or password")
 
     # Create the tokens and passing to set_access_cookies or set_refresh_cookies
     access_token = Authorize.create_access_token(subject=user.username)
@@ -55,9 +57,10 @@ def login(user: User, Authorize: AuthJWT = Depends()):
     # Set the JWT and CSRF double submit cookies in the response
     Authorize.set_access_cookies(access_token)
     Authorize.set_refresh_cookies(refresh_token)
-    return {"msg":"Successfully login"}
+    return {"msg": "Successfully login"}
 
-@app.post('/refresh')
+
+@app.post("/refresh")
 def refresh(Authorize: AuthJWT = Depends()):
     Authorize.jwt_refresh_token_required()
 
@@ -65,9 +68,10 @@ def refresh(Authorize: AuthJWT = Depends()):
     new_access_token = Authorize.create_access_token(subject=current_user)
     # Set the JWT and CSRF double submit cookies in the response
     Authorize.set_access_cookies(new_access_token)
-    return {"msg":"The token has been refresh"}
+    return {"msg": "The token has been refresh"}
 
-@app.delete('/logout')
+
+@app.delete("/logout")
 def logout(Authorize: AuthJWT = Depends()):
     """
     Because the JWT are stored in an httponly cookie now, we cannot
@@ -77,9 +81,10 @@ def logout(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
 
     Authorize.unset_jwt_cookies()
-    return {"msg":"Successfully logout"}
+    return {"msg": "Successfully logout"}
 
-@app.get('/protected')
+
+@app.get("/protected")
 def protected(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
 

@@ -1,14 +1,16 @@
 from fastapi import FastAPI, WebSocket, Depends, Query
 from fastapi.responses import HTMLResponse
-from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
+from fastapi_paseto_auth import AuthJWT
+from fastapi_paseto_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
 
 app = FastAPI()
 
+
 class Settings(BaseModel):
     authjwt_secret_key: str = "secret"
     authjwt_token_location: set = {"cookies"}
+
 
 @AuthJWT.load_config
 def get_config():
@@ -50,15 +52,19 @@ html = """
 </html>
 """
 
+
 @app.get("/")
 async def get():
     return HTMLResponse(html)
 
-@app.websocket('/ws')
-async def websocket(websocket: WebSocket, csrf_token: str = Query(...), Authorize: AuthJWT = Depends()):
+
+@app.websocket("/ws")
+async def websocket(
+    websocket: WebSocket, csrf_token: str = Query(...), Authorize: AuthJWT = Depends()
+):
     await websocket.accept()
     try:
-        Authorize.jwt_required("websocket",websocket=websocket,csrf_token=csrf_token)
+        Authorize.jwt_required("websocket", websocket=websocket, csrf_token=csrf_token)
         # Authorize.jwt_optional("websocket",websocket=websocket,csrf_token=csrf_token)
         # Authorize.jwt_refresh_token_required("websocket",websocket=websocket,csrf_token=csrf_token)
         # Authorize.fresh_jwt_required("websocket",websocket=websocket,csrf_token=csrf_token)
@@ -69,11 +75,12 @@ async def websocket(websocket: WebSocket, csrf_token: str = Query(...), Authoriz
         await websocket.send_text(err.message)
         await websocket.close()
 
-@app.get('/get-cookie')
+
+@app.get("/get-cookie")
 def get_cookie(Authorize: AuthJWT = Depends()):
-    access_token = Authorize.create_access_token(subject='test',fresh=True)
-    refresh_token = Authorize.create_refresh_token(subject='test')
+    access_token = Authorize.create_access_token(subject="test", fresh=True)
+    refresh_token = Authorize.create_refresh_token(subject="test")
 
     Authorize.set_access_cookies(access_token)
     Authorize.set_refresh_cookies(refresh_token)
-    return {"msg":"Successfully login"}
+    return {"msg": "Successfully login"}

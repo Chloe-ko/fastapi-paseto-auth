@@ -1,28 +1,29 @@
 from fastapi import FastAPI, WebSocket, Depends, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
+from fastapi_paseto_auth import AuthJWT
+from fastapi_paseto_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
 
 app = FastAPI()
+
 
 class User(BaseModel):
     username: str
     password: str
 
+
 class Settings(BaseModel):
     authjwt_secret_key: str = "secret"
+
 
 @AuthJWT.load_config
 def get_config():
     return Settings()
 
+
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 html = """
@@ -55,15 +56,19 @@ html = """
 </html>
 """
 
+
 @app.get("/")
 async def get():
     return HTMLResponse(html)
 
-@app.websocket('/ws')
-async def websocket(websocket: WebSocket, token: str = Query(...), Authorize: AuthJWT = Depends()):
+
+@app.websocket("/ws")
+async def websocket(
+    websocket: WebSocket, token: str = Query(...), Authorize: AuthJWT = Depends()
+):
     await websocket.accept()
     try:
-        Authorize.jwt_required("websocket",token=token)
+        Authorize.jwt_required("websocket", token=token)
         # Authorize.jwt_optional("websocket",token=token)
         # Authorize.jwt_refresh_token_required("websocket",token=token)
         # Authorize.fresh_jwt_required("websocket",token=token)
@@ -74,11 +79,12 @@ async def websocket(websocket: WebSocket, token: str = Query(...), Authorize: Au
         await websocket.send_text(err.message)
         await websocket.close()
 
-@app.post('/login')
+
+@app.post("/login")
 def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
-        raise HTTPException(status_code=401,detail="Bad username or password")
+        raise HTTPException(status_code=401, detail="Bad username or password")
 
-    access_token = Authorize.create_access_token(subject=user.username,fresh=True)
+    access_token = Authorize.create_access_token(subject=user.username, fresh=True)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
     return {"access_token": access_token, "refresh_token": refresh_token}
