@@ -29,6 +29,9 @@ class LoadConfig(BaseModel):
     authpaseto_refresh_token_expires: Optional[
         Union[StrictBool, StrictInt, timedelta]
     ] = timedelta(days=30)
+    authpaseto_other_token_expires: Optional[
+        Union[StrictBool, StrictInt, timedelta]
+    ] = timedelta(days=30)
 
     @validator("authpaseto_private_key")
     def validate_authpaseto_private_key(
@@ -69,6 +72,14 @@ class LoadConfig(BaseModel):
         if v is True:
             raise ValueError(
                 "The 'authpaseto_refresh_token_expires' only accept value False (bool)"
+            )
+        return v
+
+    @validator("authpaseto_other_token_expires")
+    def validate_other_token_expires(cls, v):
+        if v is True:
+            raise ValueError(
+                "The 'authpaseto_other_token_expires' only accept value False (bool)"
             )
         return v
 

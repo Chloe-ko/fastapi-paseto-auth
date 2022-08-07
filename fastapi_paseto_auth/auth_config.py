@@ -28,6 +28,7 @@ class AuthConfig:
     _token_in_denylist_callback = None
     _access_token_expires = timedelta(minutes=15)
     _refresh_token_expires = timedelta(days=30)
+    _other_token_expires = timedelta(days=30)
 
     @property
     def paseto_in_headers(self) -> bool:
@@ -54,6 +55,7 @@ class AuthConfig:
             cls._header_type = config.authpaseto_header_type
             cls._access_token_expires = config.authpaseto_access_token_expires
             cls._refresh_token_expires = config.authpaseto_refresh_token_expires
+            cls._other_token_expires = config.authpaseto_other_token_expires
         except ValidationError:
             raise
         except Exception:

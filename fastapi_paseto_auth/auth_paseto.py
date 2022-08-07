@@ -18,6 +18,7 @@ from fastapi_paseto_auth.exceptions import (
     FreshTokenRequired,
     InvalidPASETOVersionError,
     InvalidPASETOArgumentError,
+    InvalidTokenTypeError,
 )
 
 
@@ -213,6 +214,8 @@ class AuthPASETO(AuthConfig):
                 expires_time = expires_time or self._access_token_expires
             elif type_token == "refresh":
                 expires_time = expires_time or self._refresh_token_expires
+            else:
+                expires_time = expires_time or self._other_token_expires
 
         if expires_time is not False:
             if isinstance(expires_time, bool):
@@ -220,6 +223,8 @@ class AuthPASETO(AuthConfig):
                     expires_time = self._access_token_expires
                 elif type_token == "refresh":
                     expires_time = self._refresh_token_expires
+                else:
+                    expires_time = self._other_token_expires
             if isinstance(expires_time, timedelta):
                 expires_time = int(expires_time.seconds)
             elif isinstance(expires_time, datetime):
@@ -273,6 +278,28 @@ class AuthPASETO(AuthConfig):
             subject=subject,
             type_token="refresh",
             exp_seconds=self._get_expiry_seconds("refresh", expires_time),
+            purpose=purpose,
+            audience=audience,
+            user_claims=user_claims,
+        )
+
+    def create_token(
+        self,
+        subject: Union[str, int],
+        type: str,
+        purpose: Optional[str] = None,
+        expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
+        audience: Optional[Union[str, Sequence[str]]] = None,
+        user_claims: Optional[Dict] = {},
+    ) -> str:
+        """
+        Create a token with a custom type,
+        :return: hash token
+        """
+        return self._create_token(
+            subject=subject,
+            type_token=type,
+            exp_seconds=self._get_expiry_seconds(type, expires_time),
             purpose=purpose,
             audience=audience,
             user_claims=user_claims,
@@ -409,6 +436,7 @@ class AuthPASETO(AuthConfig):
         optional: bool = False,
         fresh: bool = False,
         refresh_token: bool = False,
+        type: Optional[str] = None,
     ) -> None:
         """
         This function will check whether the requester has a valid token. If not, it will raise an exception.
@@ -442,7 +470,7 @@ class AuthPASETO(AuthConfig):
 
         payload = self.get_token_payload()
 
-        if not refresh_token and payload["type"] != "access":
+        if not refresh_token and not type and payload["type"] != "access":
             raise AccessTokenRequired(
                 status_code=422,
                 message=f"Access token required but {payload['type']} provided",
@@ -451,6 +479,11 @@ class AuthPASETO(AuthConfig):
             raise RefreshTokenRequired(
                 status_code=422,
                 message=f"Refresh token required but {payload['type']} provided",
+            )
+        elif type and payload["type"] != type:
+            raise InvalidTokenTypeError(
+                status_code=422,
+                message=f"{type} token required but {payload['type'] or 'None'} provided",
             )
 
         if fresh:

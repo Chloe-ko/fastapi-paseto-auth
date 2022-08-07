@@ -23,6 +23,11 @@ def client():
         Authorize.paseto_required()
         return {"hello": "world"}
 
+    @app.get("/other_type")
+    def other_type(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required(type="other")
+        return {"hello": "other"}
+
     @app.get("/raw_token")
     def raw_token(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required()
@@ -175,6 +180,37 @@ def test_invalid_paseto_issuer(client, Authorize):
 
     AuthPASETO._decode_issuer = None
     AuthPASETO._encode_issuer = None
+
+
+def test_other_type(client: TestClient, Authorize: AuthPASETO):
+    token = Authorize.create_token(subject="test", type="other")
+    response = client.get("/other_type", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == {"hello": "other"}
+
+
+def test_invalid_paseto_type(client: TestClient, Authorize: AuthPASETO):
+
+    # Wrong type provided
+
+    token = Authorize.create_token(subject="test", type="others")
+    response = client.get("/other_type", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 422
+    assert response.json() == {"detail": "other token required but others provided"}
+
+    # No type provided
+
+    token = Authorize.create_token(subject="test", type="")
+    response = client.get("/other_type", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 422
+    assert response.json() == {"detail": "other token required but None provided"}
+
+    # Access code provided
+
+    token = Authorize.create_access_token(subject="test")
+    response = client.get("/other_type", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 422
+    assert response.json() == {"detail": "other token required but access provided"}
 
 
 def test_valid_aud(client, Authorize):

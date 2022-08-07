@@ -19,7 +19,7 @@ In here you will find the API for everything exposed in this extension.
 ---
 ### Protected Endpoint
 
-**paseto_required**(optional: bool = False, fresh: bool = False, refresh_token: bool = False):\
+**paseto_required**(optional: bool = False, fresh: bool = False, refresh_token: bool = False, type: str = access):\
     If you call this function, it will ensure that the requester has a valid access token before
     executing the code below your router. Depending on set options, it might not raise an exception even if the check fails.*
 
@@ -28,6 +28,7 @@ In here you will find the API for everything exposed in this extension.
                       (An exception will still always be raised if an invalid one is found.)
         **fresh**: If set to True, requires any PASETO found to be a fresh access token.
         **refresh_token**: If set to True, checks for a refresh token instead of an access token.
+        **type**: If set to a string, this gets checked against the type of the token provided. Used for custom types other than access or refresh tokens.
     * Returns: None
 
 
@@ -52,6 +53,19 @@ In here you will find the API for everything exposed in this extension.
 
     * Parameters:
         **subject**: Identifier for who this token is for example id or username from database
+        **purpose**: Purpose for the PASETO
+        **headers**: Valid dict for specifying additional headers in PASETO header section
+        **expires_time**: Set the duration of the PASETO
+        **audience**: Expected audience in the PASETO
+        **user_claims**: Custom claims to include in this token. This data must be dictionary
+    * Returns: An encoded refresh token
+
+**create_token**(subject, type, purpose=None, headers=None, expires_time=None, audience=None, user_claims={}):\
+    *Creates a new refresh token.*
+
+    * Parameters:
+        **subject**: Identifier for who this token is for example id or username from database
+        **type**: Type of the token to be created
         **purpose**: Purpose for the PASETO
         **headers**: Valid dict for specifying additional headers in PASETO header section
         **expires_time**: Set the duration of the PASETO
