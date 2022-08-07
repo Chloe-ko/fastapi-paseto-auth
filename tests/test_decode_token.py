@@ -28,6 +28,11 @@ def client():
         Authorize.paseto_required(type="other")
         return {"hello": "other"}
 
+    @app.get("/base64")
+    def base_64(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required(base64_encoded=True)
+        return {"hello": "base"}
+
     @app.get("/raw_token")
     def raw_token(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required()
@@ -211,6 +216,31 @@ def test_invalid_paseto_type(client: TestClient, Authorize: AuthPASETO):
     response = client.get("/other_type", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 422
     assert response.json() == {"detail": "other token required but access provided"}
+
+
+def test_base64(client: TestClient, Authorize: AuthPASETO):
+    token = Authorize.create_access_token(subject="test", base64_encode=True)
+    response = client.get("/base64", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == {"hello": "base"}
+
+
+def test_invalid_base64(client: TestClient, Authorize: AuthPASETO):
+
+    # Pass invalid base64
+
+    token = Authorize.create_access_token(subject="test", base64_encode=True)
+    token = token.replace("a", "=")
+    response = client.get("/base64", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Invalid base64 encoding"}
+
+    # Pass un-encoded token
+
+    token = Authorize.create_access_token(subject="test", base64_encode=False)
+    response = client.get("/base64", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Invalid base64 encoding"}
 
 
 def test_valid_aud(client, Authorize):

@@ -1,3 +1,7 @@
+## 0.5.3
+
+* Add ability to base64 encode and decode tokens
+
 ## 0.5.2
 
 * Implement custom token types

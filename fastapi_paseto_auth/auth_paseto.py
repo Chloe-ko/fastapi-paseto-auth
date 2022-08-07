@@ -1,3 +1,4 @@
+import binascii
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Sequence, Union, List
 from fastapi import Request, Response
@@ -6,7 +7,7 @@ import uuid
 import json
 from pyseto import Key, Paseto, Token
 from pyseto.exceptions import VerifyError, DecryptError, SignError
-import pyseto
+import base64
 from fastapi_paseto_auth.exceptions import (
     InvalidHeaderError,
     InvalidPASETOPurposeError,
@@ -120,6 +121,7 @@ class AuthPASETO(AuthConfig):
         audience: Optional[Union[str, Sequence[str]]] = "",
         user_claims: Optional[Dict[str, Union[str, bool]]] = {},
         version: Optional[int] = None,
+        base64_encode: bool = False,
     ) -> str:
         """
         Create a token
@@ -168,11 +170,16 @@ class AuthPASETO(AuthConfig):
 
         encoding_key = Key.new(version=version, purpose=purpose, key=secret_key)
 
-        return paseto.encode(
+        token = paseto.encode(
             encoding_key,
             {**reserved_claims, **custom_claims, **user_claims},
             serializer=json,
-        ).decode("utf-8")
+        )
+
+        if base64_encode:
+            token = base64.b64encode(token)
+
+        return token.decode("utf-8")
 
     def _has_token_in_denylist_callback(self) -> bool:
         """
@@ -244,6 +251,7 @@ class AuthPASETO(AuthConfig):
         expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
         audience: Optional[Union[str, Sequence[str]]] = None,
         user_claims: Optional[Dict] = {},
+        base64_encode: Optional[bool] = False,
     ) -> str:
         """
         Create a access token with 15 minutes for expired time (default),
@@ -259,6 +267,7 @@ class AuthPASETO(AuthConfig):
             audience=audience,
             user_claims=user_claims,
             issuer=self._encode_issuer,
+            base64_encode=base64_encode,
         )
 
     def create_refresh_token(
@@ -268,6 +277,7 @@ class AuthPASETO(AuthConfig):
         expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
         audience: Optional[Union[str, Sequence[str]]] = None,
         user_claims: Optional[Dict] = {},
+        base64_encode: bool = False,
     ) -> str:
         """
         Create a refresh token with 30 days for expired time (default),
@@ -281,6 +291,7 @@ class AuthPASETO(AuthConfig):
             purpose=purpose,
             audience=audience,
             user_claims=user_claims,
+            base64_encode=base64_encode,
         )
 
     def create_token(
@@ -291,6 +302,7 @@ class AuthPASETO(AuthConfig):
         expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
         audience: Optional[Union[str, Sequence[str]]] = None,
         user_claims: Optional[Dict] = {},
+        base64_encode: bool = False,
     ) -> str:
         """
         Create a token with a custom type,
@@ -303,6 +315,7 @@ class AuthPASETO(AuthConfig):
             purpose=purpose,
             audience=audience,
             user_claims=user_claims,
+            base64_encode=base64_encode,
         )
 
     def _get_token_version(
@@ -349,13 +362,24 @@ class AuthPASETO(AuthConfig):
         self._token_parts = parts
         return parts
 
-    def _decode_token(self) -> Token:
+    def _decode_token(self, base64_encoded: bool = False) -> Token:
         """
         Verified token and catch all error from paseto package and return decode token
         :param encoded_token: token hash
         :param issuer: expected issuer in the PASETO
         :return: raw data from the hash token in the form of a dictionary
         """
+
+        if base64_encoded:
+            try:
+                self._token = base64.b64decode(self._token.encode("utf-8")).decode(
+                    "utf-8"
+                )
+            except (UnicodeDecodeError, binascii.Error):
+                raise PASETODecodeError(
+                    status_code=422, message="Invalid base64 encoding"
+                )
+
         purpose = self._get_token_purpose()
         version = self._get_token_version()
 
@@ -398,10 +422,7 @@ class AuthPASETO(AuthConfig):
         if self._decoded_token:
             return self._decoded_token.payload
 
-        if not self._token:
-            return None
-
-        return self._decode_token(self._token).payload
+        return None
 
     def get_jti(self) -> str:
         """
@@ -409,7 +430,10 @@ class AuthPASETO(AuthConfig):
         :param encoded_token: The encoded PASETO from parameter
         :return: string of JTI
         """
-        return self.get_token_payload()["jti"]
+        payload = self.get_token_payload()
+        if payload and "jti" in payload.keys():
+            return payload["jti"]
+        return None
 
     def get_paseto_subject(self) -> Optional[Union[str, int]]:
         """
@@ -417,10 +441,11 @@ class AuthPASETO(AuthConfig):
         If no PASETO is present, `None` is returned instead.
         :return: sub of PASETO
         """
-        if not self._token:
-            return None
+        payload = self.get_token_payload()
+        if payload and "sub" in payload.keys():
+            return payload["sub"]
 
-        return self.get_token_payload()["sub"]
+        return None
 
     def get_subject(self) -> Optional[Union[str, int]]:
         """
@@ -437,6 +462,7 @@ class AuthPASETO(AuthConfig):
         fresh: bool = False,
         refresh_token: bool = False,
         type: Optional[str] = None,
+        base64_encoded: bool = False,
     ) -> None:
         """
         This function will check whether the requester has a valid token. If not, it will raise an exception.
@@ -461,7 +487,7 @@ class AuthPASETO(AuthConfig):
                 return None
 
         try:
-            self._decode_token()
+            self._decode_token(base64_encoded=base64_encoded)
         except PASETODecodeError as err:
             if optional:
                 return None
