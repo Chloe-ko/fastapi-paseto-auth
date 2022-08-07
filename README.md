@@ -23,7 +23,7 @@ If you were familiar with flask-jwt-extended or fastapi-jwt-auth this extension 
 - Freshness Tokens
 - Revoking Tokens
 - Support for adding custom claims to Tokens
-- Built Base64 Encoding of Tokens
+- Built-in Base64 Encoding of Tokens
 - Custom token types
 
 ## Installation
