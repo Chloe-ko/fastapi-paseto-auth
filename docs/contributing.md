@@ -19,9 +19,19 @@ Any development dependencies will be automatically installed.
 
 You might need to select the correct python interpreter after opening it in container, as VS Code defaults to using the system-wide interpreter, rather than the one set up by Pipenv.
 
+### Flit
+
+You can use `flit` to install the development dependencies that tests require to run:
+
+```bash
+$ flit install --deps develop --symlink
+```
+
+It will install all the dependencies and your local FastAPI JWT Auth in your local environment.
+
 **Using your local FastAPI PASETO Auth**
 
-If you create a Python file that imports and uses FastAPI PASETO Auth, and run it with the Python from your local environment, it will use your localFastAPI PASETO Auth source code.
+If you create a Python file that imports and uses FastAPI PASETO Auth, and run it with the Python from your local environment, it will use your local FastAPI PASETO Auth source code. This is thanks to the --symlink flag in the flit command shown above.
 
 That way, you don't have to "install" your local version to be able to test every change.
 
