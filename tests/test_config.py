@@ -184,7 +184,7 @@ def test_load_env_from_outside():
 
         @AuthPASETO.load_config
         def get_invalid_token_location_value():
-            return [("authpaseto_token_location", {"headers", "cookie"})]
+            return [("authpaseto_token_location", {"header"})]
 
     with pytest.raises(ValidationError, match=r"authpaseto_secret_key"):
 

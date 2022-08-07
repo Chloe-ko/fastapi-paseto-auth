@@ -17,24 +17,24 @@ def client():
         )
 
     @app.get("/paseto-required")
-    def jwt_required(Authorize: AuthPASETO = Depends()):
+    def paseto_required(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required()
         return {"hello": "world"}
 
     @app.get("/paseto-optional")
-    def jwt_optional(Authorize: AuthPASETO = Depends()):
+    def paseto_optional(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required(optional=True)
         if Authorize.get_paseto_subject():
             return {"hello": "world"}
         return {"hello": "anonym"}
 
     @app.get("/paseto-refresh-required")
-    def jwt_refresh_required(Authorize: AuthPASETO = Depends()):
+    def fresh_paseto_refresh_required(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required(refresh_token=True)
         return {"hello": "world"}
 
     @app.get("/fresh-paseto-required")
-    def fresh_jwt_required(Authorize: AuthPASETO = Depends()):
+    def fresh_paseto_required(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required(fresh=True)
         return {"hello": "world"}
 
@@ -61,7 +61,7 @@ def test_only_access_token_allowed(client, url, Authorize):
     assert response.json() == {"detail": "Access token required but refresh provided"}
 
 
-def test_jwt_required(client, Authorize):
+def test_paseto_required(client, Authorize):
     url = "/paseto-required"
     token = Authorize.create_access_token(subject="test")
     response = client.get(url, headers={"Authorization": f"Bearer {token}"})
@@ -69,7 +69,7 @@ def test_jwt_required(client, Authorize):
     assert response.json() == {"hello": "world"}
 
 
-def test_jwt_optional(client, Authorize):
+def test_paseto_optional(client, Authorize):
     url = "/paseto-optional"
     # if header not define return anonym user
     response = client.get(url)
@@ -96,7 +96,7 @@ def test_refresh_required(client, Authorize):
     assert response.json() == {"hello": "world"}
 
 
-def test_fresh_jwt_required(client, Authorize):
+def test_fresh_paseto_required(client, Authorize):
     url = "/fresh-paseto-required"
     # only fresh token allowed
     token = Authorize.create_access_token(subject="test")

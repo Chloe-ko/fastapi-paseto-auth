@@ -63,12 +63,12 @@ class AuthConfig:
     def token_in_denylist_loader(cls, callback: Callable[..., bool]) -> "AuthConfig":
         """
         This decorator sets the callback function that will be called when
-        a protected endpoint is accessed and will check if the JWT has been
+        a protected endpoint is accessed and will check if the PASETO has been
         been revoked. By default, this callback is not used.
 
         *HINT*: The callback must be a function that takes decrypted_token argument,
-        args for object AuthJWT and this is not used, decrypted_token is decode
-        JWT (python dictionary) and returns *`True`* if the token has been deny,
+        args for object AuthPASETO and this is not used, decrypted_token is decode
+        PASETO (python dictionary) and returns *`True`* if the token has been deny,
         or *`False`* otherwise.
         """
         cls._token_in_denylist_callback = callback

@@ -102,7 +102,7 @@ def test_verified_token(client: TestClient, encoded_token, Authorize: AuthPASETO
     access_token = Authorize.create_access_token(subject="test")
     refresh_token = Authorize.create_refresh_token(subject="test")
     time.sleep(2)
-    # JWT payload is now expired
+    # PASETO payload is now expired
     # But with some leeway, it will still validate
     response = client.get(
         "/protected", headers={"Authorization": f"Bearer {access_token}"}
@@ -132,7 +132,7 @@ def test_get_raw_token(client, default_access_token, encoded_token):
     assert response.json() == default_access_token
 
 
-def test_get_jwt_jti(
+def test_get_paseto_jti(
     client: TestClient, default_access_token, encoded_token, Authorize: AuthPASETO
 ):
     response = client.get(
@@ -142,7 +142,7 @@ def test_get_jwt_jti(
     assert response.json() == default_access_token["jti"]
 
 
-def test_get_jwt_subject(client, default_access_token, encoded_token):
+def test_get_paseto_subject(client, default_access_token, encoded_token):
     response = client.get(
         "/get_subject", headers={"Authorization": f"Bearer {encoded_token}"}
     )
@@ -150,7 +150,7 @@ def test_get_jwt_subject(client, default_access_token, encoded_token):
     assert response.json() == default_access_token["sub"]
 
 
-def test_invalid_jwt_issuer(client, Authorize):
+def test_invalid_paseto_issuer(client, Authorize):
     # No issuer claim expected or provided - OK
     token = Authorize.create_access_token(subject="test")
     response = client.get("/protected", headers={"Authorization": f"Bearer {token}"})

@@ -1,5 +1,5 @@
-"""FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight)"""
+"""FastAPI extension that provides PASETO Auth support"""
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 from .auth_paseto import AuthPASETO

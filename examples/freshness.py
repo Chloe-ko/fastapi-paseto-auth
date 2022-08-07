@@ -82,7 +82,7 @@ def protected(Authorize: AuthPASETO = Depends()):
     return {"user": current_user}
 
 
-# Only fresh JWT access token can access this endpoint
+# Only fresh PASETO access token can access this endpoint
 @app.get("/protected-fresh")
 def protected_fresh(Authorize: AuthPASETO = Depends()):
     Authorize.paseto_required(fresh=True)

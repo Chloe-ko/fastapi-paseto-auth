@@ -40,7 +40,7 @@ def login(user: User, Authorize: AuthPASETO = Depends()):
     return {"access_token": access_token}
 
 
-# In protected route, get the claims you added to the jwt with the
+# In protected route, get the claims you added to the paseto with the
 # get_token_payload() method
 @app.get("/claims")
 def user(Authorize: AuthPASETO = Depends()):

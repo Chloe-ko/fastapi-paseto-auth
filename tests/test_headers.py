@@ -27,7 +27,7 @@ def client():
     return client
 
 
-def test_header_without_jwt(client):
+def test_header_without_paseto(client):
     response = client.get("/protected", headers={"Authorization": "Bearer"})
     assert response.status_code == 422
     assert response.json() == {
@@ -55,7 +55,7 @@ def test_header_without_bearer(client):
     }
 
 
-def test_header_invalid_jwt(client):
+def test_header_invalid_paseto(client):
     response = client.get("/protected", headers={"Authorization": "Bearer asd"})
     assert response.status_code == 422
     assert response.json() == {"detail": "Invalid PASETO format"}
