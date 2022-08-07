@@ -1,69 +1,27 @@
 ## Sharing feedback
 
-This project is still quite new and therefore having your feedback will really help to
-prioritize relevant feature developments :rocket:. If you want to contribute thankss a lot :smile:, you can
-open an <a href="https://github.com/IndominusByte/fastapi-jwt-auth/issues/new" target="_blank">issue</a> on Github.
+This project is still relatively new and probably has flaws, both in terms of internal usability as well as code quality.\
+I have tried my best to however make sure that it is as secure as it can be.\
+I also do not yet have a complete understanding of the project, especially the CI/CD and tests. If you find something I missed to adjust, please feel free to let me know.
+
+If you have suggestions for improvements or want to help, feel free to <a href="https://github.com/Chloe-ko/fastapi-paseto-auth/issues/new" target="_blank">open an issue</a> or create a PR with your modifications.
 
 ## Developing
 
 If you already cloned the repository and you know that you need to deep dive in the code, here are some guidelines to set up your environment.
 
-### Virtual environment with venv
+This project uses VS Code Development containers.
+With the <a href="https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers" target="_blank">Remote - Containers</a> extension installed in VSCode, and Docker installed on your device, VSCode should automatically prompt you about having found a development container configuration file and offer you to open the project in the container.
 
-You can create a virtual environment in a directory using Python's `venv` module:
+If not, you can always press F1 and manually click "Remote-Containers: Open Folder in Container" and select the source of this repo that contains the .devcontainer folder.
 
-```bash
-$ python3 -m venv env
-```
+Any development dependencies will be automatically installed.
 
-That will create a directory `./env/` with the Python binaries and then you will be able to install packages for that isolated environment.
+You might need to select the correct python interpreter after opening it in container, as VS Code defaults to using the system-wide interpreter, rather than the one set up by Pipenv.
 
-### Activate the environment
+**Using your local FastAPI PASETO Auth**
 
-```bash
-$ source ./env/bin/activate
-```
-
-To check it worked, use:
-
-```bash
-$ which pip
-
-some/directory/fastapi-jwt-auth/env/bin/pip
-```
-
-If it shows the pip binary at env/bin/pip then it worked. 🎉
-
-!!! tip
-    Every time you install a new package with `pip` under that environment, activate the environment again.
-    This makes sure that if you use a terminal program installed by that package (like `flit`),
-    you use the one from your local environment and not any other that could be installed globally.
-
-### Flit
-
-FastAPI JWT Auth uses <a href="https://flit.readthedocs.io/en/latest/index.html" class="external-link" target="_blank">Flit</a> to build, package and publish the project.
-
-After activating the environment as described above, install `flit`:
-
-```bash
-$ pip install flit
-```
-
-Now re-activate the environment to make sure you are using the `flit` you just installed (and not a global one).
-
-And now use `flit` to install the development dependencies:
-
-```bash
-$ flit install --deps develop --symlink
-```
-
-It will install all the dependencies and your local FastAPI JWT Auth in your local environment.
-
-**Using your local FastAPI JWT Auth**
-
-If you create a Python file that imports and use FastAPI JWT Auth, and run it with the Python from your local environment, it will use your localFastAPI JWT Auth source code.
-
-And if you update that local FastAPI JWT Auth source code, as it is installed with `--symlink`, when you run that Python file again, it will use the fresh version of FastAPI JWT Auth you just edited.
+If you create a Python file that imports and uses FastAPI PASETO Auth, and run it with the Python from your local environment, it will use your localFastAPI PASETO Auth source code.
 
 That way, you don't have to "install" your local version to be able to test every change.
 
@@ -73,7 +31,7 @@ The documentation uses <a href="https://www.mkdocs.org/" class="external-link" t
 
 All the documentation is in Markdown format in the directory `./docs`.
 
-Many of the sections in  the User Guide have blocks of code.
+Many of the sections in the User Guide have blocks of code.
 
 In fact, those blocks of code are not written inside the Markdown, they are Python files in the `./examples/` directory.
 

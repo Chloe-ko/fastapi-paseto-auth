@@ -34,7 +34,7 @@ Documentation = "https://chloe-ko.github.io/fastapi-paseto-auth/"
 
 [tool.flit.metadata.requires-extra]
 test = [
-  "pytest==6.0.1",
+  "pytest==6.2.5",
   "pytest-cov==2.10.0",
   "coveralls==2.1.2"
 ]
@@ -46,6 +46,6 @@ doc = [
 ]
 
 dev = [
-  "uvicorn>=0.11.5,<0.12.0"
+  "uvicorn>=0.11.5"
 ]
 

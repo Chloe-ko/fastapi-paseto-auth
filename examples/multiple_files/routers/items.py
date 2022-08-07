@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
-from fastapi_paseto_auth import AuthJWT
+from fastapi_paseto_auth import AuthPASETO
 
 router = APIRouter()
 
 
 @router.get("/items")
-def items(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
+def items(Authorize: AuthPASETO = Depends()):
+    Authorize.paseto_required()
 
     items = ["item1", "item2", "item3"]
 

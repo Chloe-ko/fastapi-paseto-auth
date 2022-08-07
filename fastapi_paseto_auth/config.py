@@ -15,7 +15,7 @@ class LoadConfig(BaseModel):
     authpaseto_decode_leeway: Optional[Union[StrictInt, timedelta]] = 0
     authpaseto_encode_issuer: Optional[StrictStr] = None
     authpaseto_decode_issuer: Optional[StrictStr] = None
-    authpaseto_decode_audience: Optional[Union[StrictStr, Sequence[StrictStr]]] = None
+    authpaseto_decode_audience: Optional[Union[StrictStr, Sequence[StrictStr]]] = ""
     authpaseto_denylist_enabled: Optional[StrictBool] = False
     authpaseto_denylist_token_checks: Optional[Sequence[StrictStr]] = {
         "access",

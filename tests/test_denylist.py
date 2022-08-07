@@ -1,6 +1,6 @@
 import pytest
-from fastapi_paseto_auth import AuthJWT
-from fastapi_paseto_auth.exceptions import AuthJWTException
+from fastapi_paseto_auth import AuthPASETO
+from fastapi_paseto_auth.exceptions import AuthPASETOException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
@@ -11,40 +11,50 @@ denylist = set()
 
 @pytest.fixture(scope="function")
 def client():
-    AuthJWT._denylist_enabled = True
+    AuthPASETO._denylist_enabled = True
 
-    @AuthJWT.token_in_denylist_loader
+    @AuthPASETO.token_in_denylist_loader
     def check_if_token_in_denylist(decrypted_token):
         jti = decrypted_token["jti"]
         return jti in denylist
 
     app = FastAPI()
 
-    @app.exception_handler(AuthJWTException)
-    def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+    @app.exception_handler(AuthPASETOException)
+    def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
         return JSONResponse(
             status_code=exc.status_code, content={"detail": exc.message}
         )
 
-    @app.get("/jwt-required")
-    def jwt_required(Authorize: AuthJWT = Depends()):
-        Authorize.jwt_required()
+    @app.get("/paseto-required")
+    def jwt_required(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required()
         return {"hello": "world"}
 
-    @app.get("/jwt-optional")
-    def jwt_optional(Authorize: AuthJWT = Depends()):
-        Authorize.jwt_optional()
+    @app.get("/paseto-optional")
+    def jwt_optional(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required()
         return {"hello": "world"}
 
-    @app.get("/jwt-refresh-required")
-    def jwt_refresh_required(Authorize: AuthJWT = Depends()):
-        Authorize.jwt_refresh_token_required()
+    @app.get("/paseto-refresh-required")
+    def jwt_refresh_required(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required(refresh_token=True)
         return {"hello": "world"}
 
-    @app.get("/fresh-jwt-required")
-    def fresh_jwt_required(Authorize: AuthJWT = Depends()):
-        Authorize.fresh_jwt_required()
+    @app.get("/fresh-paseto-required")
+    def fresh_jwt_required(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required(fresh=True)
         return {"hello": "world"}
+
+    @app.get("/get-jti")
+    def get_access_jti(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required()
+        return {"jti": Authorize.get_jti()}
+
+    @app.get("/get-refresh-jti")
+    def get_refresh_jti(Authorize: AuthPASETO = Depends()):
+        Authorize.paseto_required(refresh_token=True)
+        return {"jti": Authorize.get_jti()}
 
     client = TestClient(app)
     return client
@@ -61,32 +71,38 @@ def refresh_token(Authorize):
 
 
 @pytest.mark.parametrize(
-    "url", ["/jwt-required", "/jwt-optional", "/fresh-jwt-required"]
+    "url", ["/paseto-required", "/paseto-optional", "/fresh-paseto-required"]
 )
-def test_non_denylisted_access_token(client, url, access_token, Authorize):
+def test_non_denylisted_access_token(client, url, access_token, Authorize: AuthPASETO):
     response = client.get(url, headers={"Authorization": f"Bearer {access_token}"})
     assert response.status_code == 200
     assert response.json() == {"hello": "world"}
 
     # revoke token in last test url
-    if url == "/fresh-jwt-required":
-        jti = Authorize.get_jti(access_token)
+    if url == "/fresh-paseto-required":
+        response = client.get(
+            "/get-jti", headers={"Authorization": f"Bearer {access_token}"}
+        )
+        jti = response.json()["jti"]
         denylist.add(jti)
 
 
-def test_non_denylisted_refresh_token(client, refresh_token, Authorize):
-    url = "/jwt-refresh-required"
+def test_non_denylisted_refresh_token(client, refresh_token, Authorize: AuthPASETO):
+    url = "/paseto-refresh-required"
     response = client.get(url, headers={"Authorization": f"Bearer {refresh_token}"})
     assert response.status_code == 200
     assert response.json() == {"hello": "world"}
 
     # revoke token
-    jti = Authorize.get_jti(refresh_token)
+    response = client.get(
+        "/get-refresh-jti", headers={"Authorization": f"Bearer {refresh_token}"}
+    )
+    jti = response.json()["jti"]
     denylist.add(jti)
 
 
 @pytest.mark.parametrize(
-    "url", ["/jwt-required", "/jwt-optional", "/fresh-jwt-required"]
+    "url", ["/paseto-required", "/paseto-optional", "/fresh-paseto-required"]
 )
 def test_denylisted_access_token(client, url, access_token):
     response = client.get(url, headers={"Authorization": f"Bearer {access_token}"})
@@ -95,7 +111,7 @@ def test_denylisted_access_token(client, url, access_token):
 
 
 def test_denylisted_refresh_token(client, refresh_token):
-    url = "/jwt-refresh-required"
+    url = "/paseto-refresh-required"
     response = client.get(url, headers={"Authorization": f"Bearer {refresh_token}"})
     assert response.status_code == 401
     assert response.json() == {"detail": "Token has been revoked"}

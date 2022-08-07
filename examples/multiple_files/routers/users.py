@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi_paseto_auth import AuthJWT
+from fastapi_paseto_auth import AuthPASETO
 from pydantic import BaseModel
 
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.post("/login")
-def login(user: User, Authorize: AuthJWT = Depends()):
+def login(user: User, Authorize: AuthPASETO = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
 

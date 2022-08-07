@@ -36,6 +36,16 @@ class InvalidPASETOVersionError(AuthPASETOException):
         self.message = message
 
 
+class InvalidPASETOArgumentError(AuthPASETOException):
+    """
+    Error raised if PASETOs get checked with unfulfillable arguments
+    """
+
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+
+
 class InvalidPASETOPurposeError(AuthPASETOException):
     """
     Error raised if the purpose of the PASETO is not supported

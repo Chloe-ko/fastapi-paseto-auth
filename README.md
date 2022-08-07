@@ -1,7 +1,3 @@
-<h1>
-  WIP: This is a fresh fork that I plan to change to support PASETO instead of JWT. Not yet functional or production ready.
-</h1>
-
 <h1 align="left" style="margin-bottom: 20px; font-weight: 500; font-size: 50px; color: black;">
   FastAPI PASETO Auth
 </h1>
@@ -17,7 +13,10 @@
 ---
 
 ## Features
-FastAPI extension that provides PASETO Auth support (secure, easy to use and lightweight), if you were familiar with flask-jwt-extended or fastapi-jwt-auth this extension suitable for you, as this is forked from fastapi-jwt-auth which in turn used flask-jwt-extended as motivation
+FastAPI extension that provides PASETO (**P**lastform-**A**gnostic **SE**curity **TO**kens) Auth support\
+PASETO are a simpler, yet more secure alternative to JWTs.
+
+If you were familiar with flask-jwt-extended or fastapi-jwt-auth this extension suitable for you, as this is forked from fastapi-jwt-auth which in turn used flask-jwt-extended as motivation
 
 - Access tokens and refresh tokens
 - Freshness Tokens
@@ -33,6 +32,13 @@ pip install fastapi-paseto-auth
 
 ## Roadmap
 - Support for WebSocket authorization
+
+## FAQ
+- **Where's support for tokens in cookies?**\
+I mostly forked fastapi-jwt-auth because I needed a library to use for authentication using PASETO tokens in my private FastAPI Application. Which is why I only kept the functionality that I personally required.\
+Personally, I'm not a fan of saving data in cookies, and cookie support made up a big part of the code which just didn't make sense for me to bother adapting.\
+Hence, I will not be implementing support for storing PASETO tokens in cookies.\
+However, I will gladly accept PRs implementing such if someone else wants to implement it.
 
 ## License
 This project is licensed under the terms of the MIT license.

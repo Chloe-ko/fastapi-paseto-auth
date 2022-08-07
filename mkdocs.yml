@@ -39,9 +39,8 @@ nav:
     - Revoking Tokens: usage/revoking.md
   - Advanced Usage:
     - Additional claims: advanced-usage/additional-claims.md
-    - Dynamic Token Expires: advanced-usage/dynamic-expires.md
-    - Dynamic Token Algorithm: advanced-usage/dynamic-algorithm.md
-    - WebSocket Protecting: advanced-usage/websocket.md
+    - Dynamic Token Expires: advanced-usage/expiry_time.md
+    - Dynamic Token Purpose: advanced-usage/purpose.md
     - Bigger Applications: advanced-usage/bigger-app.md
     - Generate Documentation: advanced-usage/generate-docs.md
   - Configuration Options:

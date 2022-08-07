@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
-from fastapi_paseto_auth import AuthJWT
-from fastapi_paseto_auth.exceptions import AuthJWTException
+from fastapi_paseto_auth import AuthPASETO
+from fastapi_paseto_auth.exceptions import AuthPASETOException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -13,22 +13,22 @@ class User(BaseModel):
 
 
 class Settings(BaseModel):
-    authjwt_secret_key: str = "secret"
+    authpaseto_secret_key: str = "secret"
 
 
-@AuthJWT.load_config
+@AuthPASETO.load_config
 def get_config():
     return Settings()
 
 
-@app.exception_handler(AuthJWTException)
-def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+@app.exception_handler(AuthPASETOException)
+def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 # Standard login endpoint. Will return a fresh access token and a refresh token
 @app.post("/login")
-def login(user: User, Authorize: AuthJWT = Depends()):
+def login(user: User, Authorize: AuthPASETO = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
 
@@ -44,21 +44,21 @@ def login(user: User, Authorize: AuthJWT = Depends()):
 
 
 @app.post("/refresh")
-def refresh(Authorize: AuthJWT = Depends()):
+def refresh(Authorize: AuthPASETO = Depends()):
     """
     Refresh token endpoint. This will generate a new access token from
     the refresh token, but will mark that access token as non-fresh,
     as we do not actually verify a password in this endpoint.
     """
-    Authorize.jwt_refresh_token_required()
+    Authorize.paseto_required(fresh=True)
 
-    current_user = Authorize.get_jwt_subject()
+    current_user = Authorize.get_subject()
     new_access_token = Authorize.create_access_token(subject=current_user, fresh=False)
     return {"access_token": new_access_token}
 
 
 @app.post("/fresh-login")
-def fresh_login(user: User, Authorize: AuthJWT = Depends()):
+def fresh_login(user: User, Authorize: AuthPASETO = Depends()):
     """
     Fresh login endpoint. This is designed to be used if we need to
     make a fresh token for a user (by verifying they have the
@@ -73,19 +73,19 @@ def fresh_login(user: User, Authorize: AuthJWT = Depends()):
     return {"access_token": new_access_token}
 
 
-# Any valid JWT access token can access this endpoint
+# Any valid PASETO access token can access this endpoint
 @app.get("/protected")
-def protected(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
+def protected(Authorize: AuthPASETO = Depends()):
+    Authorize.paseto_required()
 
-    current_user = Authorize.get_jwt_subject()
+    current_user = Authorize.get_subject()
     return {"user": current_user}
 
 
 # Only fresh JWT access token can access this endpoint
 @app.get("/protected-fresh")
-def protected_fresh(Authorize: AuthJWT = Depends()):
-    Authorize.fresh_jwt_required()
+def protected_fresh(Authorize: AuthPASETO = Depends()):
+    Authorize.paseto_required(fresh=True)
 
-    current_user = Authorize.get_jwt_subject()
+    current_user = Authorize.get_subject()
     return {"user": current_user}

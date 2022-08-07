@@ -7,6 +7,7 @@ from pyseto import Token
 
 class AuthConfig:
     _token = None
+    _token_parts = []
     _token_location = {"headers"}
     _current_user = None
     _decoded_token: Optional[Token] = None
@@ -19,7 +20,7 @@ class AuthConfig:
     _decode_leeway = 0
     _encode_issuer = None
     _decode_issuer = None
-    _decode_audience = None
+    _decode_audience = ""
     _denylist_enabled = False
     _denylist_token_checks = {"access", "refresh"}
     _header_name = "Authorization"

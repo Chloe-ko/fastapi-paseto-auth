@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Sequence, Union, List
-from fastapi import Request
+from fastapi import Request, Response
 from fastapi_paseto_auth.auth_config import AuthConfig
 import uuid
 import json
 from pyseto import Key, Paseto, Token
-from pyseto.exceptions import VerifyError, DecryptError
+from pyseto.exceptions import VerifyError, DecryptError, SignError
 import pyseto
 from fastapi_paseto_auth.exceptions import (
     InvalidHeaderError,
@@ -17,17 +17,19 @@ from fastapi_paseto_auth.exceptions import (
     RefreshTokenRequired,
     FreshTokenRequired,
     InvalidPASETOVersionError,
+    InvalidPASETOArgumentError,
 )
 
 
 class AuthPASETO(AuthConfig):
-    def __init__(self, req: Request = None) -> None:
+    def __init__(self, request: Request = None, response: Response = None) -> None:
         """
         Get PASETO header from incoming request and decode it
         """
-        if req:
+        # self._token = self._get_paseto_from_header(request.headers.get(self._header_name))
+        if request:
             if self.paseto_in_headers:
-                auth_header = req.headers.get(self._header_name)
+                auth_header = request.headers.get(self._header_name)
                 if auth_header:
                     self._token = self._get_paseto_from_header(auth_header)
 
@@ -41,24 +43,27 @@ class AuthPASETO(AuthConfig):
 
         parts: List[str] = auth_header.split()
 
+        token: Optional[str] = None
+
         # Make sure the header is in a valid format that we are expecting
         if not header_type:
             # <HeaderName>: <PASETO>
             if len(parts) != 1:
                 raise InvalidHeaderError(
                     status_code=422,
-                    msg=f"Bad {header_name} header. Excepted value '<PASETO>'",
+                    message=f"Bad {header_name} header. Excepted value 'Bearer <PASETO>'",
                 )
-            self._token = parts[0]
+            token = parts[0]
         else:
             # <HeaderName>: <HeaderType> <PASETO>
             if not parts[0].__contains__(header_type) or len(parts) != 2:
                 raise InvalidHeaderError(
                     status_code=422,
-                    msg=f"Bad {header_name} header. Expected value {header_type}.",
+                    message=f"Bad {header_name} header. Expected value '{header_type} <PASETO>'",
                 )
 
-            self._token = parts[1]
+            token = parts[1]
+        return token
 
     def _get_paseto_identifier(self) -> str:
         return str(uuid.uuid4())
@@ -111,7 +116,7 @@ class AuthPASETO(AuthConfig):
         fresh: Optional[bool] = None,
         issuer: Optional[str] = None,
         purpose: Optional[str] = None,
-        audience: Optional[Union[str, Sequence[str]]] = None,
+        audience: Optional[Union[str, Sequence[str]]] = "",
         user_claims: Optional[Dict[str, Union[str, bool]]] = {},
         version: Optional[int] = None,
     ) -> str:
@@ -120,7 +125,7 @@ class AuthPASETO(AuthConfig):
         """
         if not isinstance(subject, (str, int)):
             raise TypeError("Subject must be a string or int")
-        if not isinstance(fresh, bool):
+        if fresh is not None and not isinstance(fresh, bool):
             raise TypeError("Fresh must be a boolean")
         if audience and not isinstance(audience, (str, list, tuple, set, frozenset)):
             raise TypeError("audience must be a string or sequence")
@@ -133,7 +138,7 @@ class AuthPASETO(AuthConfig):
 
         reserved_claims = {
             "sub": subject,
-            "nbf": self._get_int_from_datetime(datetime.utcnow()),
+            "nbf": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
             "jti": self._get_paseto_identifier(),
         }
 
@@ -142,8 +147,13 @@ class AuthPASETO(AuthConfig):
         if type_token == "access":
             custom_claims["fresh"] = fresh
 
+        issuer = issuer or self._encode_issuer
+
         if issuer:
             custom_claims["iss"] = issuer
+
+        if audience:
+            custom_claims["aud"] = audience
 
         purpose = purpose or self._purpose
         version = version or self._version
@@ -153,10 +163,7 @@ class AuthPASETO(AuthConfig):
 
         secret_key = self._get_secret_key(purpose, "encode")
 
-        paseto = Paseto.new(
-            exp=exp_seconds,
-            include_iat=True,
-        )
+        paseto = Paseto.new(exp=exp_seconds, include_iat=True)
 
         encoding_key = Key.new(version=version, purpose=purpose, key=secret_key)
 
@@ -164,7 +171,7 @@ class AuthPASETO(AuthConfig):
             encoding_key,
             {**reserved_claims, **custom_claims, **user_claims},
             serializer=json,
-        )
+        ).decode("utf-8")
 
     def _has_token_in_denylist_callback(self) -> bool:
         """
@@ -172,7 +179,7 @@ class AuthPASETO(AuthConfig):
         """
         return self._token_in_denylist_callback is not None
 
-    def _check_token_is_revoked(self) -> None:
+    def _check_token_is_revoked(self, payload: Dict) -> None:
         """
         Ensure that AUTHPASETO_DENYLIST_ENABLED is true and callback regulated, and then
         call function denylist callback with passing decode PASETO, if true
@@ -188,14 +195,14 @@ class AuthPASETO(AuthConfig):
                 "authpaseto_denylist_enabled is 'True'"
             )
 
-        if self._token_in_denylist_callback.__func__(self._token):
+        if self._token_in_denylist_callback.__func__(payload):
             raise RevokedTokenError(status_code=401, message="Token has been revoked")
 
     def _get_expiry_seconds(
         self,
         type_token: str,
         expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
-    ) -> Union[None, int]:
+    ) -> int:
         if expires_time and not isinstance(
             expires_time, (timedelta, datetime, int, bool)
         ):
@@ -207,7 +214,7 @@ class AuthPASETO(AuthConfig):
             elif type_token == "refresh":
                 expires_time = expires_time or self._refresh_token_expires
 
-        if expires_time is False:
+        if expires_time is not False:
             if isinstance(expires_time, bool):
                 if type_token == "access":
                     expires_time = self._access_token_expires
@@ -222,14 +229,13 @@ class AuthPASETO(AuthConfig):
 
             return expires_time
         else:
-            return None
+            return 0
 
     def create_access_token(
         self,
         subject: Union[str, int],
         fresh: Optional[bool] = False,
         purpose: Optional[str] = None,
-        headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
         audience: Optional[Union[str, Sequence[str]]] = None,
         user_claims: Optional[Dict] = {},
@@ -242,10 +248,9 @@ class AuthPASETO(AuthConfig):
         return self._create_token(
             subject=subject,
             type_token="access",
-            exp_time=self._get_expired_time("access", expires_time),
+            exp_seconds=self._get_expiry_seconds("access", expires_time),
             fresh=fresh,
             purpose=purpose,
-            headers=headers,
             audience=audience,
             user_claims=user_claims,
             issuer=self._encode_issuer,
@@ -255,7 +260,6 @@ class AuthPASETO(AuthConfig):
         self,
         subject: Union[str, int],
         purpose: Optional[str] = None,
-        headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta, datetime, int, bool]] = None,
         audience: Optional[Union[str, Sequence[str]]] = None,
         user_claims: Optional[Dict] = {},
@@ -268,9 +272,8 @@ class AuthPASETO(AuthConfig):
         return self._create_token(
             subject=subject,
             type_token="refresh",
-            exp_time=self._get_expired_time("refresh", expires_time),
+            exp_seconds=self._get_expiry_seconds("refresh", expires_time),
             purpose=purpose,
-            headers=headers,
             audience=audience,
             user_claims=user_claims,
         )
@@ -278,7 +281,7 @@ class AuthPASETO(AuthConfig):
     def _get_token_version(
         self,
     ) -> int:
-        parts = self._token.split(".")
+        parts = self._get_raw_token_parts()
         match parts[0]:
             case "v4":
                 return 4
@@ -296,7 +299,7 @@ class AuthPASETO(AuthConfig):
     def _get_token_purpose(
         self,
     ) -> str:
-        parts = self._token.split(".")
+        parts = self._get_raw_token_parts()
         match parts[1]:
             case "local":
                 return "local"
@@ -307,6 +310,18 @@ class AuthPASETO(AuthConfig):
                     status_code=422, message=f"Invalid PASETO purpose {parts[1]}"
                 )
 
+    def _get_raw_token_parts(
+        self,
+    ) -> List[str]:
+        if self._token_parts:
+            return self._token_parts
+
+        parts = self._token.split(".")
+        if len(parts) != 3:
+            raise PASETODecodeError(status_code=422, message=f"Invalid PASETO format")
+        self._token_parts = parts
+        return parts
+
     def _decode_token(self) -> Token:
         """
         Verified token and catch all error from paseto package and return decode token
@@ -314,31 +329,46 @@ class AuthPASETO(AuthConfig):
         :param issuer: expected issuer in the PASETO
         :return: raw data from the hash token in the form of a dictionary
         """
-
-        purpose = self._get_token_purpose(self._token)
-        version = self._get_token_version(self._token)
+        purpose = self._get_token_purpose()
+        version = self._get_token_version()
 
         secret_key = self._get_secret_key(purpose=purpose, process="decode")
         decoding_key = Key.new(version=version, purpose=purpose, key=secret_key)
 
         try:
-            token = pyseto.decode(
-                keys=decoding_key, token=self._token, deserializer=json
+            paseto = Paseto.new(leeway=self._decode_leeway)
+            token = paseto.decode(
+                keys=decoding_key,
+                token=self._token,
+                deserializer=json,
+                aud=self._decode_audience,
             )
+
+            if self._decode_issuer:
+                if "iss" not in token.payload.keys():
+                    raise PASETODecodeError(
+                        status_code=422, message="Token is missing the 'iss' claim"
+                    )
+                if token.payload["iss"] != self._decode_issuer:
+                    raise PASETODecodeError(
+                        status_code=422, message="Token issuer is not valid"
+                    )
+
+            self._check_token_is_revoked(token.payload)
             self._decoded_token = token
-            self._current_user = token.payload["sub"]
+            if "sub" in token.payload.keys():
+                self._current_user = token.payload["sub"]
             return token
-        except Exception as err:
+        except (DecryptError, SignError, VerifyError) as err:
             raise PASETODecodeError(status_code=422, message=str(err))
 
     def get_token_payload(self) -> Optional[Dict[str, Union[str, int, bool]]]:
         """
         Get payload from token
-        :param decoded_token: decoded token object
         :return: payload from token
         """
 
-        if self._decode_token:
+        if self._decoded_token:
             return self._decoded_token.payload
 
         if not self._token:
@@ -352,7 +382,7 @@ class AuthPASETO(AuthConfig):
         :param encoded_token: The encoded PASETO from parameter
         :return: string of JTI
         """
-        return self.get_token_payload(self._token)["jti"]
+        return self.get_token_payload()["jti"]
 
     def get_paseto_subject(self) -> Optional[Union[str, int]]:
         """
@@ -363,9 +393,9 @@ class AuthPASETO(AuthConfig):
         if not self._token:
             return None
 
-        return self.get_token_payload(self._token)["sub"]
+        return self.get_token_payload()["sub"]
 
-    def current_user(self) -> Optional[Union[str, int]]:
+    def get_subject(self) -> Optional[Union[str, int]]:
         """
         this will return the subject of the PASETO that is accessing this endpoint.
         If no PASETO was validated yet, returns none
@@ -388,6 +418,12 @@ class AuthPASETO(AuthConfig):
         :return: None
         """
 
+        if refresh_token and fresh:
+            raise InvalidPASETOArgumentError(
+                status_code=422,
+                message="fresh and refresh_token cannot be True at the same time",
+            )
+
         if not self._token:
             if not optional:
                 raise MissingTokenError(
@@ -398,7 +434,7 @@ class AuthPASETO(AuthConfig):
 
         try:
             self._decode_token()
-        except (VerifyError, DecryptError) as err:
+        except PASETODecodeError as err:
             if optional:
                 return None
             else:
@@ -408,12 +444,12 @@ class AuthPASETO(AuthConfig):
 
         if not refresh_token and payload["type"] != "access":
             raise AccessTokenRequired(
-                status_code=401,
+                status_code=422,
                 message=f"Access token required but {payload['type']} provided",
             )
         elif refresh_token and payload["type"] != "refresh":
             raise RefreshTokenRequired(
-                status_code=401,
+                status_code=422,
                 message=f"Refresh token required but {payload['type']} provided",
             )
 

@@ -2,4 +2,4 @@
 
 __version__ = "0.5.0"
 
-from .auth_paseto import AuthJWT
+from .auth_paseto import AuthPASETO

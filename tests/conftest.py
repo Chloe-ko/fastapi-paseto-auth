@@ -1,7 +1,7 @@
 import pytest
-from fastapi_paseto_auth import AuthJWT
+from fastapi_paseto_auth import AuthPASETO
 
 
 @pytest.fixture(scope="module")
 def Authorize():
-    return AuthJWT()
+    return AuthPASETO()

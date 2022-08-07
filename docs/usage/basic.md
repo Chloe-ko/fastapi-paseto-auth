@@ -15,7 +15,7 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-To access a **jwt_required** protected url, all we have to do is send in the JWT with the request. By default, this is done with an authorization header that looks like:
+To access a **paseto_required** protected url, all we have to do is send the PASETO with the request. By default, this is done with an authorization header that looks like:
 
 ```
 Authorization: Bearer <access_token>

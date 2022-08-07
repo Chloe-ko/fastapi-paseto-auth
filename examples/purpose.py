@@ -15,6 +15,18 @@ class User(BaseModel):
 class Settings(BaseModel):
     authpaseto_secret_key: str = "secret"
 
+    # Private and public keys are required if you want to use public purpose authentication
+    authpaseto_private_key: str = """
+-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIL7pfyWYtZD7fDPDm+W0kWbNo/AdbRrDjjxMOgy2EL1N
+-----END PRIVATE KEY-----
+"""
+    authpaset_public_key: str = """
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAc4ZDHPLZ6eGU3yL4ApPpQUq4cQUA900NY1csJIcwAxY=
+-----END PUBLIC KEY-----
+"""
+
 
 @AuthPASETO.load_config
 def get_config():
@@ -31,21 +43,18 @@ def login(user: User, Authorize: AuthPASETO = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
 
-    # Use create_access_token() and create_refresh_token() to create our
-    # access and refresh tokens
-    access_token = Authorize.create_access_token(subject=user.username)
-    refresh_token = Authorize.create_refresh_token(subject=user.username)
+    # You can define different purpose when creating a token
+    access_token = Authorize.create_access_token(subject=user.username, purpose="local")
+    refresh_token = Authorize.create_refresh_token(
+        subject=user.username, purpose="public"
+    )
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 
+# In a protected route, you don't need to worry about what type of key you are receiving
+# because it will automatically be detected by the library.
 @app.post("/refresh")
 def refresh(Authorize: AuthPASETO = Depends()):
-    """
-    The paseto_required(refresh_token=True) function insures a valid refresh
-    token is present in the request before running any code below that function.
-    We can use the get_subject() function to get the subject of the refresh
-    token, and use the create_access_token() function again to make a new access token
-    """
     Authorize.paseto_required(refresh_token=True)
 
     current_user = Authorize.get_subject()
