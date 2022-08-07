@@ -3,7 +3,7 @@
 </h1>
 
 ![Tests](https://github.com/Chloe-ko/fastapi-paseto-auth/workflows/Tests/badge.svg)
-
+[![Coverage Status](https://coveralls.io/repos/github/Chloe-ko/fastapi-paseto-auth/badge.svg?branch=master)](https://coveralls.io/github/IndominusByte/fastapi-jwt-auth?branch=master)
 ---
 
 **Documentation**: <a href="https://chloe-ko.github.io/fastapi-paseto-auth" target="_blank">https://chloe-ko.github.io/fastapi-paseto-auth</a>

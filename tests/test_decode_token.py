@@ -195,8 +195,7 @@ def test_valid_aud(client, Authorize):
     assert response.status_code == 200
     assert response.json() == 1
 
-    if token_aud == ["foo", "bar", "baz"]:
-        AuthPASETO._decode_audience = None
+    AuthPASETO._decode_audience = None
 
 
 def test_invalid_aud_and_missing_aud(client, Authorize):
@@ -217,8 +216,7 @@ def test_invalid_aud_and_missing_aud(client, Authorize):
     assert response.status_code == 422
     assert response.json() == {"detail": "aud verification failed."}
 
-    if token_aud == ["bar", "baz"]:
-        AuthPASETO._decode_audience = None
+    AuthPASETO._decode_audience = None
 
 
 def test_valid_asymmetric_algorithms(client, Authorize):
