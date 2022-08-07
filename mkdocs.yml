@@ -1,5 +1,5 @@
 site_name: FastAPI PASETO Auth
-site_description: FastAPI extension that provides PASETO Auth support (secure, easy to use, and lightweight)
+site_description: FastAPI extension that provides PASETO Auth support
 theme:
   name: material
   palette:
