@@ -13,12 +13,12 @@
 
 ---
 
-## Features
 FastAPI extension that provides PASETO (**P**lastform-**A**gnostic **SE**curity **TO**kens) Auth support\
 PASETO are a simpler, yet more secure alternative to JWTs.
 
 If you were familiar with flask-jwt-extended or fastapi-jwt-auth this extension suitable for you, as this is forked from fastapi-jwt-auth which in turn used flask-jwt-extended as motivation
 
+## Features
 - Access tokens and refresh tokens
 - Freshness Tokens
 - Revoking Tokens
