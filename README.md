@@ -4,6 +4,7 @@
 
 ![Tests](https://github.com/Chloe-ko/fastapi-paseto-auth/workflows/Tests/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/Chloe-ko/fastapi-paseto-auth/badge.svg?branch=master)](https://coveralls.io/github/IndominusByte/fastapi-jwt-auth?branch=master)
+[![PyPI version](https://badge.fury.io/py/fastapi-paseto-auth.svg)](https://badge.fury.io/py/fastapi-paseto-auth)
 ---
 
 **Documentation**: <a href="https://chloe-ko.github.io/fastapi-paseto-auth" target="_blank">https://chloe-ko.github.io/fastapi-paseto-auth</a>
