@@ -22,7 +22,9 @@ If you were familiar with flask-jwt-extended or fastapi-jwt-auth this extension 
 - Access tokens and refresh tokens
 - Freshness Tokens
 - Revoking Tokens
-- Support for adding custom claims to JSON Web Tokens
+- Support for adding custom claims to Tokens
+- Built Base64 Encoding of Tokens
+- Custom token types
 
 ## Installation
 The easiest way to start working with this extension with pip
@@ -38,8 +40,8 @@ pip install fastapi-paseto-auth
 - **Where's support for tokens in cookies?**\
 I mostly forked fastapi-jwt-auth because I needed a library to use for authentication using PASETO tokens in my private FastAPI Application. Which is why I only kept the functionality that I personally required.\
 Personally, I'm not a fan of saving data in cookies, and cookie support made up a big part of the code which just didn't make sense for me to bother adapting.\
-Hence, I will not be implementing support for storing PASETO tokens in cookies.\
-However, I will gladly accept PRs implementing such if someone else wants to implement it.
+Hence, I likely will not be implementing support for storing PASETO tokens in cookies unless there is a considerable amount of people wanting it.\
+However, I will gladly accept PRs implementing tokens in cookies if someone else wants to implement it.
 
 ## License
 This project is licensed under the terms of the MIT license.
