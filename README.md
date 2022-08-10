@@ -5,6 +5,7 @@
 ![Tests](https://github.com/Chloe-ko/fastapi-paseto-auth/workflows/Tests/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/Chloe-ko/fastapi-paseto-auth/badge.svg?branch=master)](https://coveralls.io/github/Chloe-ko/fastapi-paseto-auth?branch=master)
 [![PyPI version](https://badge.fury.io/py/fastapi-paseto-auth.svg)](https://badge.fury.io/py/fastapi-paseto-auth)
+[![Downloads](https://static.pepy.tech/personalized-badge/fastapi-paseto-auth?period=total&units=international_system&left_color=grey&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/fastapi-paseto-auth)
 ---
 
 **Documentation**: <a href="https://chloe-ko.github.io/fastapi-paseto-auth" target="_blank">https://chloe-ko.github.io/fastapi-paseto-auth</a>
