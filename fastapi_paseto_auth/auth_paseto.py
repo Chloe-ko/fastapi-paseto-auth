@@ -233,11 +233,11 @@ class AuthPASETO(AuthConfig):
                 else:
                     expires_time = self._other_token_expires
             if isinstance(expires_time, timedelta):
-                expires_time = int(expires_time.seconds)
+                expires_time = int(expires_time.total_seconds())
             elif isinstance(expires_time, datetime):
                 current_time = datetime.utcnow()
                 valid_time: timedelta = expires_time - current_time
-                expires_time = int(valid_time.seconds)
+                expires_time = int(valid_time.total_seconds())
 
             return expires_time
         else:
