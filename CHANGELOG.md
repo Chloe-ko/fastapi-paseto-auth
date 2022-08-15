@@ -1,3 +1,7 @@
+## 0.5.4
+
+* Fix incorrect way to get seconds from datetime.timedelta instance 
+
 ## 0.5.3
 
 * Add ability to base64 encode and decode tokens
