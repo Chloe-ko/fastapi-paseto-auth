@@ -231,6 +231,9 @@ def test_invalid_base64(client: TestClient, Authorize: AuthPASETO):
 
     token = Authorize.create_access_token(subject="test", base64_encode=True)
     token = token.replace("a", "=")
+    token = token.replace("e", "=")
+    token = token.replace("j", "=")
+    token = token.replace("A", "=")
     response = client.get("/base64", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 422
     assert response.json() == {"detail": "Invalid base64 encoding"}

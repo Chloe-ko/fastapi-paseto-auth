@@ -4,8 +4,6 @@ from fastapi_paseto_auth.exceptions import AuthPASETOException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from typing import Optional
-from pydantic import BaseSettings
 
 
 @pytest.fixture(scope="function")

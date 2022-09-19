@@ -34,6 +34,10 @@ class AuthConfig:
     def paseto_in_headers(self) -> bool:
         return "headers" in self._token_location
 
+    @property
+    def paseto_in_json(self) -> bool:
+        return "json" in self._token_location
+
     @classmethod
     def load_config(cls, settings: Callable[..., List[tuple]]) -> "AuthConfig":
         try:
@@ -53,6 +57,7 @@ class AuthConfig:
             cls._denylist_token_checks = config.authpaseto_denylist_token_checks
             cls._header_name = config.authpaseto_header_name
             cls._header_type = config.authpaseto_header_type
+            cls._json_key = config.authpaseto_json_key
             cls._access_token_expires = config.authpaseto_access_token_expires
             cls._refresh_token_expires = config.authpaseto_refresh_token_expires
             cls._other_token_expires = config.authpaseto_other_token_expires

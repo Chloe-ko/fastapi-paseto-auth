@@ -1,10 +1,11 @@
 import binascii
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Sequence, Union, List
-from fastapi import Request, Response
+from fastapi import Request, Response, Depends
 from fastapi_paseto_auth.auth_config import AuthConfig
 import uuid
 import json
+from json import JSONDecodeError
 from pyseto import Key, Paseto, Token
 from pyseto.exceptions import VerifyError, DecryptError, SignError
 import base64
@@ -23,17 +24,43 @@ from fastapi_paseto_auth.exceptions import (
 )
 
 
+async def get_request_json(request: Request) -> str:
+    try:
+        return await request.json()
+    except JSONDecodeError:
+        return {}
+
+
 class AuthPASETO(AuthConfig):
-    def __init__(self, request: Request = None, response: Response = None) -> None:
+    def __init__(
+        self,
+        request: Request = None,
+        response: Response = None,
+        request_json: Dict = Depends(get_request_json),
+    ) -> None:
         """
         Get PASETO header from incoming request and decode it
         """
+        self._request_json = request_json
         # self._token = self._get_paseto_from_header(request.headers.get(self._header_name))
         if request:
+            self._request = request
             if self.paseto_in_headers:
                 auth_header = request.headers.get(self._header_name)
                 if auth_header:
                     self._token = self._get_paseto_from_header(auth_header)
+            if not self._token and self.paseto_in_json:
+                self._token = self._get_paseto_from_json(self._json_key)
+
+    def _get_paseto_from_json(self, json_key: str) -> Optional[str]:
+        """
+        Get token from the request body
+        :param request: incoming request
+        """
+        token: str | None = None
+        if json_key in self._request_json.keys():
+            token = self._request_json[json_key]
+        return token
 
     def _get_paseto_from_header(self, auth_header: str) -> Optional[str]:
         """
@@ -463,6 +490,8 @@ class AuthPASETO(AuthConfig):
         refresh_token: bool = False,
         type: Optional[str] = None,
         base64_encoded: bool = False,
+        location: Optional[str] = None,
+        token_key: Optional[str] = None,
     ) -> None:
         """
         This function will check whether the requester has a valid token. If not, it will raise an exception.
@@ -477,6 +506,15 @@ class AuthPASETO(AuthConfig):
                 status_code=422,
                 message="fresh and refresh_token cannot be True at the same time",
             )
+
+        # Get token from explicitly set location in case it differs from default location
+        if location and location not in self._token_location:
+            if location == "headers":
+                self._token = self._get_paseto_from_header(
+                    token_key or self._header_name
+                )
+            elif location == "json":
+                self._token = self._get_paseto_from_json(token_key or self._json_key)
 
         if not self._token:
             if not optional:

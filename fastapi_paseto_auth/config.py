@@ -22,6 +22,7 @@ class LoadConfig(BaseModel):
         "refresh",
     }
     authpaseto_header_name: Optional[StrictStr] = "Authorization"
+    authpaseto_json_key: Optional[StrictStr] = "access_token"
     authpaseto_header_type: Optional[StrictStr] = "Bearer"
     authpaseto_access_token_expires: Optional[
         Union[StrictBool, StrictInt, timedelta]
@@ -93,9 +94,9 @@ class LoadConfig(BaseModel):
 
     @validator("authpaseto_token_location", each_item=True)
     def validate_token_location(cls, v):
-        if v not in ["headers"]:
+        if v not in ["headers", "json"]:
             raise ValueError(
-                "The 'authpaseto_token_location' must be between 'headers' or 'body'"
+                "The 'authpaseto_token_location' must be between 'headers' or 'json'"
             )
         return v
 

@@ -1,9 +1,11 @@
+from typing import Sequence
 import pytest
 from fastapi_paseto_auth import AuthPASETO
 from fastapi_paseto_auth.exceptions import AuthPASETOException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
+from pydantic import BaseSettings
 
 
 @pytest.fixture(scope="function")
@@ -46,6 +48,14 @@ def client():
     "url", ["/paseto-required", "/paseto-refresh-required", "/fresh-paseto-required"]
 )
 def test_missing_header(client, url):
+    class SettingsOne(BaseSettings):
+        authpaseto_token_location: Sequence[str] = {"headers"}
+        authpaseto_secret_key: str = "testing"
+
+    @AuthPASETO.load_config
+    def get_settings_one():
+        return SettingsOne()
+
     response = client.get(url)
     assert response.status_code == 401
     assert response.json() == {"detail": "PASETO Authorization Token required"}
