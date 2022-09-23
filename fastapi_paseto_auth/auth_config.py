@@ -58,6 +58,7 @@ class AuthConfig:
             cls._header_name = config.authpaseto_header_name
             cls._header_type = config.authpaseto_header_type
             cls._json_key = config.authpaseto_json_key
+            cls._json_type = config.authpaseto_json_type
             cls._access_token_expires = config.authpaseto_access_token_expires
             cls._refresh_token_expires = config.authpaseto_refresh_token_expires
             cls._other_token_expires = config.authpaseto_other_token_expires

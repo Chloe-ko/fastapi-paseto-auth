@@ -24,6 +24,7 @@ class LoadConfig(BaseModel):
     authpaseto_header_name: Optional[StrictStr] = "Authorization"
     authpaseto_json_key: Optional[StrictStr] = "access_token"
     authpaseto_header_type: Optional[StrictStr] = "Bearer"
+    authpaseto_json_type: Optional[StrictStr] = None
     authpaseto_access_token_expires: Optional[
         Union[StrictBool, StrictInt, timedelta]
     ] = timedelta(minutes=15)

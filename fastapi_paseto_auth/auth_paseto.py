@@ -45,14 +45,16 @@ class AuthPASETO(AuthConfig):
         # self._token = self._get_paseto_from_header(request.headers.get(self._header_name))
         if request:
             self._request = request
-            if self.paseto_in_headers:
-                auth_header = request.headers.get(self._header_name)
-                if auth_header:
-                    self._token = self._get_paseto_from_header(auth_header)
-            if not self._token and self.paseto_in_json:
-                self._token = self._get_paseto_from_json(self._json_key)
+        # if self.paseto_in_headers:
+        #     auth_header = request.headers.get(self._header_name)
+        #     if auth_header:
+        #         self._token = self._get_paseto_from_header(auth_header)
+        # if not self._token and self.paseto_in_json:
+        #     self._token = self._get_paseto_from_json(self._json_key)
 
-    def _get_paseto_from_json(self, json_key: str) -> Optional[str]:
+    def _get_paseto_from_json(
+        self, json_key: str | None = None, json_type: str | None = None
+    ) -> Optional[str]:
         """
         Get token from the request body
         :param request: incoming request
@@ -60,16 +62,39 @@ class AuthPASETO(AuthConfig):
         token: str | None = None
         if json_key in self._request_json.keys():
             token = self._request_json[json_key]
+        else:
+            return None
+        json_type = json_type or self._json_type
+        if not json_type:
+            # <JSONKey>: <PASETO>
+            if not token:
+                raise InvalidHeaderError(
+                    status_code=422,
+                    message=f"Bad {json_key} header. Excepted value 'Bearer <PASETO>'",
+                )
+        else:
+            # <JSONKey>: <JSONType> <PASETO>
+            token_prefix, token = token.split()
+            if not token or token_prefix != json_type:
+                raise InvalidHeaderError(
+                    status_code=422,
+                    message=f"Bad {json_key} header. Expected value '{json_type} <PASETO>'",
+                )
         return token
 
-    def _get_paseto_from_header(self, auth_header: str) -> Optional[str]:
+    def _get_paseto_from_header(
+        self, header_name: str | None = None, header_type: str | None = None
+    ) -> Optional[str]:
         """
         Get token from the headers
         :param auth_header: value from HeaderName
         """
+        header_name = header_name or self._header_name
+        header_type = header_type or self._header_type
 
-        header_name, header_type = self._header_name, self._header_type
-
+        auth_header: str = self._request.headers.get(self._header_name)
+        if not auth_header:
+            return None
         parts: List[str] = auth_header.split()
 
         token: Optional[str] = None
@@ -80,7 +105,7 @@ class AuthPASETO(AuthConfig):
             if len(parts) != 1:
                 raise InvalidHeaderError(
                     status_code=422,
-                    message=f"Bad {header_name} header. Excepted value 'Bearer <PASETO>'",
+                    message=f"Bad {header_name} header. Excepted value '<PASETO>'",
                 )
             token = parts[0]
         else:
@@ -492,6 +517,8 @@ class AuthPASETO(AuthConfig):
         base64_encoded: bool = False,
         location: Optional[str] = None,
         token_key: Optional[str] = None,
+        token_prefix: Optional[str] = None,
+        token: Optional[Union[str, bool]] = None,
     ) -> None:
         """
         This function will check whether the requester has a valid token. If not, it will raise an exception.
@@ -507,15 +534,20 @@ class AuthPASETO(AuthConfig):
                 message="fresh and refresh_token cannot be True at the same time",
             )
 
-        # Get token from explicitly set location in case it differs from default location
-        if location and location not in self._token_location:
-            if location == "headers":
+        if token:
+            self._token = token
+        else:
+            location = location or self._token_location
+            if "headers" in location:
                 self._token = self._get_paseto_from_header(
-                    token_key or self._header_name
+                    header_name=token_key or self._header_name,
+                    header_type=token_prefix or self._header_type,
                 )
-            elif location == "json":
-                self._token = self._get_paseto_from_json(token_key or self._json_key)
-
+            elif "json" in location:
+                self._token = self._get_paseto_from_json(
+                    json_key=token_key or self._json_key,
+                    json_type=token_prefix or self._json_type,
+                )
         if not self._token:
             if not optional:
                 raise MissingTokenError(

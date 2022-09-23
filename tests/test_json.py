@@ -24,7 +24,7 @@ def client():
         return {"hello": "world"}
 
     @app.get("/protected_json_refresh")
-    def protected(Authorize: AuthPASETO = Depends()):
+    def protected_refresh(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required(
             location="json", token_key="refresh_token", refresh_token=True
         )
