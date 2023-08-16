@@ -15,7 +15,7 @@ class User(BaseModel):
 # in production you can use Settings management
 # from pydantic to get secret key from .env
 class Settings(BaseModel):
-    authoaseto_secret_key: str = "secret"
+    authpaseto_secret_key: str = "secret"
 
 
 # callback to get your configuration
