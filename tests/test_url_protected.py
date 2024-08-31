@@ -5,7 +5,7 @@ from fastapi_paseto_auth.exceptions import AuthPASETOException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 @pytest.fixture(scope="function")
@@ -49,7 +49,7 @@ def client():
 )
 def test_missing_header(client, url):
     class SettingsOne(BaseSettings):
-        authpaseto_token_location: Sequence[str] = {"headers"}
+        authpaseto_token_location: Sequence[str] = ["headers"]
         authpaseto_secret_key: str = "testing"
 
     @AuthPASETO.load_config
@@ -71,7 +71,7 @@ def test_only_access_token_allowed(client, url, Authorize):
     assert response.json() == {"detail": "Access token required but refresh provided"}
 
 
-def test_paseto_required(client, Authorize):
+def test_paseto_required(client: TestClient, Authorize: AuthPASETO):
     url = "/paseto-required"
     token = Authorize.create_access_token(subject="test")
     response = client.get(url, headers={"Authorization": f"Bearer {token}"})
@@ -79,7 +79,7 @@ def test_paseto_required(client, Authorize):
     assert response.json() == {"hello": "world"}
 
 
-def test_paseto_optional(client, Authorize):
+def test_paseto_optional(client: TestClient, Authorize: AuthPASETO):
     url = "/paseto-optional"
     # if header not define return anonym user
     response = client.get(url)
@@ -92,7 +92,7 @@ def test_paseto_optional(client, Authorize):
     assert response.json() == {"hello": "world"}
 
 
-def test_refresh_required(client, Authorize):
+def test_refresh_required(client: TestClient, Authorize: AuthPASETO):
     url = "/paseto-refresh-required"
     # only refresh token allowed
     token = Authorize.create_access_token(subject="test")
@@ -106,7 +106,7 @@ def test_refresh_required(client, Authorize):
     assert response.json() == {"hello": "world"}
 
 
-def test_fresh_paseto_required(client, Authorize):
+def test_fresh_paseto_required(client: TestClient, Authorize: AuthPASETO):
     url = "/fresh-paseto-required"
     # only fresh token allowed
     token = Authorize.create_access_token(subject="test")

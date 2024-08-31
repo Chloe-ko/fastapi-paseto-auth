@@ -4,7 +4,8 @@ from pyseto import Key
 from fastapi_paseto_auth import AuthPASETO
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
-from pydantic import BaseSettings, ValidationError
+from pydantic import ValidationError
+from pydantic_settings import BaseSettings
 from typing import Sequence, Optional
 from datetime import timedelta
 

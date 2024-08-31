@@ -5,7 +5,7 @@ from fastapi_paseto_auth.exceptions import AuthPASETOException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 @pytest.fixture(scope="function")
@@ -20,13 +20,13 @@ def client():
 
     @app.get("/protected_json")
     def protected(Authorize: AuthPASETO = Depends()):
-        Authorize.paseto_required(location="json")
+        Authorize.paseto_required(location="headers")
         return {"hello": "world"}
 
     @app.get("/protected_json_refresh")
     def protected_refresh(Authorize: AuthPASETO = Depends()):
         Authorize.paseto_required(
-            location="json", token_key="refresh_token", refresh_token=True
+            location="headers", token_key="refresh_token", refresh_token=True
         )
         return {"hello": "world"}
 
@@ -53,14 +53,14 @@ def test_invalid_json_token(client):
     def get_settings_one():
         return SettingsOne()
 
-    response = client.get("/protected_json", json={"access_token": "asd"})
+    response = client.get("/protected_json", headers={"Authorization": f"Bearer aed"})
     assert response.status_code == 422
     assert response.json() == {"detail": "Invalid PASETO format"}
 
 
 def test_wrong_location(client, access_token):
     class SettingsOne(BaseSettings):
-        authpaseto_token_location: Sequence[str] = {"headers"}
+        authpaseto_token_location: Sequence[str] = ["headers"]
         authpaseto_secret_key: str = "testing"
 
     @AuthPASETO.load_config
@@ -68,7 +68,7 @@ def test_wrong_location(client, access_token):
         return SettingsOne()
 
     response = client.get(
-        "/protected_json", headers={"Authorization": f"Bearer {access_token}"}
+        "/protected_json"
     )
     assert response.status_code == 401
     assert response.json() == {"detail": "PASETO Authorization Token required"}
@@ -76,7 +76,7 @@ def test_wrong_location(client, access_token):
 
 def test_alternate_key(client, refresh_token):
     response = client.get(
-        "/protected_json_refresh", json={"refresh_token": refresh_token}
+        "/protected_json_refresh", headers={"Authorization": f"Bearer {refresh_token}"}
     )
     assert response.status_code == 200
     assert response.json() == {"hello": "world"}
@@ -84,6 +84,6 @@ def test_alternate_key(client, refresh_token):
 
 def test_valid_json(client, access_token):
     # token = Authorize.create_access_token(subject="test")
-    response = client.get("/protected_json", json={"access_token": access_token})
+    response = client.get("/protected_json", headers={"Authorization": f"Bearer {access_token}"})
     assert response.status_code == 200
     assert response.json() == {"hello": "world"}
