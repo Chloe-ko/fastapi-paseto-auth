@@ -1,4 +1,4 @@
-from fastapi_paseto_auth.config import LoadConfig
+from fastapi_paseto.config import LoadConfig
 from pydantic import ValidationError
 from typing import Callable, List, Optional, Dict
 from datetime import timedelta

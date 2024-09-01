@@ -8,9 +8,9 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/fastapi-paseto-auth?period=total&units=international_system&left_color=grey&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/fastapi-paseto-auth)
 ---
 
-**Documentation**: <a href="https://chloe-ko.github.io/fastapi-paseto-auth" target="_blank">https://chloe-ko.github.io/fastapi-paseto-auth</a>
+**Documentation**: <a href="https://yashram96.github.io/fastapi-paseto" target="_blank">https://yashram96.github.io/fastapi-paseto</a>
 
-**Source Code**: <a href="https://github.com/Chloe-ko/fastapi-paseto-auth" target="_blank">https://github.com/Chloe-ko/fastapi-paseto-auth</a>
+**Source Code**: <a href="https://github.com/yashram96/fastapi-paseto" target="_blank">https://github.com/yashram96/fastapi-paseto</a>
 
 ---
 
@@ -31,7 +31,7 @@ If you were familiar with flask-jwt-extended or fastapi-jwt-auth this extension 
 The easiest way to start working with this extension with pip
 
 ```bash
-pip install fastapi-paseto-auth
+pip install fastapi-paseto
 ```
 
 ## Roadmap

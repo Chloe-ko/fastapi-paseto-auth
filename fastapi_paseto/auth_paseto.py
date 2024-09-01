@@ -2,14 +2,14 @@ import binascii
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Sequence, Union, List
 from fastapi import Request, Response, Depends
-from fastapi_paseto_auth.auth_config import AuthConfig
+from fastapi_paseto.auth_config import AuthConfig
 import uuid
 import json
 from json import JSONDecodeError
 from pyseto import Key, Paseto, Token
 from pyseto.exceptions import VerifyError, DecryptError, SignError
 import base64
-from fastapi_paseto_auth.exceptions import (
+from fastapi_paseto.exceptions import (
     InvalidHeaderError,
     InvalidPASETOPurposeError,
     PASETODecodeError,

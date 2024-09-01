@@ -4,7 +4,7 @@ This project is still relatively new and probably has flaws, both in terms of in
 I have tried my best to however make sure that it is as secure as it can be.\
 I also do not yet have a complete understanding of the project, especially the CI/CD and tests. If you find something I missed to adjust, please feel free to let me know.
 
-If you have suggestions for improvements or want to help, feel free to <a href="https://github.com/Chloe-ko/fastapi-paseto-auth/issues/new" target="_blank">open an issue</a> or create a PR with your modifications.
+If you have suggestions for improvements or want to help, feel free to <a href="https://github.com/yashram96/fastapi-paseto/issues/new" target="_blank">open an issue</a> or create a PR with your modifications.
 
 ## Developing
 
