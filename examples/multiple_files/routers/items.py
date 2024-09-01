@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi_paseto_auth import AuthPASETO
+from fastapi_paseto import AuthPASETO
 
 router = APIRouter()
 

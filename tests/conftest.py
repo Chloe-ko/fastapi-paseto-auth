@@ -1,5 +1,5 @@
 import pytest
-from fastapi_paseto_auth import AuthPASETO
+from fastapi_paseto import AuthPASETO
 
 
 @pytest.fixture(scope="module")

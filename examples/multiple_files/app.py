@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi_paseto_auth import AuthPASETO
-from fastapi_paseto_auth.exceptions import AuthPASETOException
+from fastapi_paseto import AuthPASETO
+from fastapi_paseto.exceptions import AuthPASETOException
 from routers import users, items
 from pydantic import BaseModel
 

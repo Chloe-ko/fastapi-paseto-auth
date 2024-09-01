@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi_paseto_auth import AuthPASETO
+from fastapi_paseto import AuthPASETO
 from pydantic import BaseModel
 
 
