@@ -27,6 +27,7 @@ var/
 .installed.cfg
 *.egg
 .pytest_cache
+.pypirc
 
 # coverage
 .coverage
