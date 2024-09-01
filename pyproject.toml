@@ -3,11 +3,11 @@ requires = ["flit_core>=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
-module = "fastapi_paseto_auth_v2"
-dist-name = "fastapi-paseto-auth-v2"
+module = "fastapi_paseto"
+dist-name = "fastapi-paseto"
 author = "Neneko"
 author-email = "fastapi@nyu.moe"
-home-page = "https://github.com/yashram96/fastapi-paseto-auth"
+home-page = "https://github.com/yashram96/fastapi-paseto"
 
 classifiers = [
   "Environment :: Web Environment",
@@ -30,7 +30,7 @@ description-file = "README.md"
 requires-python = ">=3.10"
 
 [tool.flit.metadata.urls]
-Documentation = "https://yashram.github.io/fastapi-paseto-auth-v2/"
+Documentation = "https://yashram.github.io/fastapi-paseto/"
 
 [tool.flit.metadata.requires-extra]
 test = [
